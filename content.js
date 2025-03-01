@@ -158,4 +158,23 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     });
     return true; // Required for async response
   }
+  if (request.action === "getDiff") {
+    // Get the PR diff content from the page
+    const diffContent = getDiffContent(); // Implement this function to get the PR diff
+    sendResponse({ diff: diffContent });
+  }
 });
+
+function getDiffContent() {
+  // Example implementation - adjust based on GitHub's DOM structure
+  const diffElements = document.querySelectorAll('.diff-view .file');
+  let diffContent = '';
+  
+  diffElements.forEach(diff => {
+    const fileName = diff.querySelector('.file-header').getAttribute('data-path');
+    const codeContent = diff.querySelector('.diff-table').textContent;
+    diffContent += `File: ${fileName}\n${codeContent}\n\n`;
+  });
+  
+  return diffContent;
+}

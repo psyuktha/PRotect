@@ -1,3 +1,5 @@
+import analyzeSecurityIssues from './gem.js';
+
 document.addEventListener("DOMContentLoaded", () => {
   // Query active tab
   chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
@@ -7,10 +9,18 @@ document.addEventListener("DOMContentLoaded", () => {
     if (activeTab.url.match(/github\.com\/.*\/pull\//)) {
       chrome.tabs.sendMessage(
         activeTab.id,
-        { action: "analyze" },
-        (response) => {
-          if (response) {
-            updateUI(response);
+        { action: "getDiff" },
+        async (response) => {
+          if (response && response.diff) {
+            try {
+              const securityIssues = await analyzeSecurityIssues(response.diff);
+              console.log(securityIssues);
+              updateUI(securityIssues);
+            } catch (error) {
+              console.error('Error analyzing security issues:', error);
+              // Optionally update UI to show error
+              updateUI({ error: 'Failed to analyze security issues' });
+            }
           }
         }
       );
@@ -65,7 +75,7 @@ function updateUI(results) {
     groupTitle.className = "issue-group-title";
     groupTitle.textContent = `${type} (${issues.length})`;
     groupElement.appendChild(groupTitle);
-
+    console.log(issues);
     issues.forEach((issue) => {
       const issueElement = document.createElement("div");
       issueElement.className = "issue-item";
